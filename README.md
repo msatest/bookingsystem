@@ -148,7 +148,7 @@
 
     - user는 예약을 취소할 수 있다. (ok)
     
-    - user와 admin이 티켓리스트를 중간중간 조회한다. (ok) - view(ticketlist)의 구현
+    - user와 admin이 티켓리스트를 중간중간 조회한다. (ok) - view(ticketlist)의 구현 
 
 
 ### 완성본에 대한 비기능적 요구사항을 커버하는지 검증
@@ -163,12 +163,7 @@
 
 ## 헥사고날 아키텍처 다이어그램 도출
     
-![image](https://user-images.githubusercontent.com/487999/79684772-eba9ab00-826e-11ea-9405-17e2bf39ec76.png)
-
-
-    - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
-    - 호출관계에서 PubSub 과 Req/Resp 를 구분함
-    - 서브 도메인과 바운디드 컨텍스트의 분리:  각 팀의 KPI 별로 아래와 같이 관심 구현 스토리를 나눠가짐
+![image](https://user-images.githubusercontent.com/12521968/81839579-b731c200-9582-11ea-8f94-61d7f1c4ccfd.jpg)
 
 
 # 구현
