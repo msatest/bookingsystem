@@ -1,5 +1,5 @@
 
-# 예제 - 티켓 예약
+# 티켓예약 시스템
 
 본 예제는 MSA/DDD/Event Storming/EDA 를 포괄하는 분석/설계/구현/운영 전단계를 커버하도록 구성한 예제입니다.
 - 체크포인트 : https://workflowy.com/s/assessment-check-po/T5YrzcMewfo4J6LW
@@ -41,7 +41,7 @@
     1. 모든 트랜잭션은 비동기식으로 구성한다. 
 1. 장애격리
     1. 티켓시스템 기능이 수행되지 않더라도 예약은 365일 24시간 받을 수 있어야 한다. Async (event-driven), Eventual Consistency
-    1. 결제시스템이 과중되면 user를 잠시동안 받지 않고 결제를 잠시후에 하도록 유도한다. user에게는 Pending상태로 보여준다. Circuit breaker, fallback
+    1. 결제시스템 기능이 수행되지 않더라도 결제요청은 365일 24시간 받을 수 있어야 한다. Async (event-driven), Eventual Consistency
 1. 성능
     1. user가 예약에 대한 티켓상태를 예약시스템(프론트엔드)에서 티켓리스트로 확인할 수 있어야 한다. CQRS
 
@@ -105,38 +105,26 @@
 # 분석/설계
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://msaez.io/#/storming/nZJ2QhwVc4NlVJPbtTkZ8x9jclF2/every/a77281d704710b0c2e6a823b6e6d973a/-M5AV2z--su_i4BfQfeF
-
+* MSAEz 로 모델링한 이벤트스토밍  
 
 ### 이벤트 도출
-![image](https://user-images.githubusercontent.com/487999/79683604-47bc0180-8266-11ea-9212-7e88c9bf9911.png)
+![image](https://user-images.githubusercontent.com/12521968/81823357-36b59600-956f-11ea-9b34-a7806425e9c4.png)
 
 ### 부적격 이벤트 탈락
-![image](https://user-images.githubusercontent.com/487999/79683612-4b4f8880-8266-11ea-9519-7e084524a462.png)
-
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
-        - 주문시>메뉴카테고리선택됨, 주문시>메뉴검색됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
+        - 티켓재고확인 이벤트와 티켓예약가능함/티켓예약불가능함은 중복된 과정으로 포괄적인 티켓재고확인 이벤트를 제외함
 
-### 액터, 커맨드 부착하여 읽기 좋게
-![image](https://user-images.githubusercontent.com/487999/79683614-4ee30f80-8266-11ea-9a50-68cdff2dcc46.png)
+### 액터, 커맨드, 폴리시 부착
+![image](ttps://user-images.githubusercontent.com/12521968/81826995-4d5dec00-9573-11ea-87b3-3108a6bf9a76.png)
 
-### 어그리게잇으로 묶기
-![image](https://user-images.githubusercontent.com/487999/79683618-52769680-8266-11ea-9c21-48d6812444ba.png)
+### 어그리게잇, 바운디드 컨텍스트로 묶기
+![image](https://user-images.githubusercontent.com/12521968/81827940-39ff5080-9574-11ea-874b-cd64402efa5b.png)
 
-    - app의 Order, store 의 주문처리, 결제의 결제이력은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
-
-### 바운디드 컨텍스트로 묶기
-
-![image](https://user-images.githubusercontent.com/487999/79683625-560a1d80-8266-11ea-9790-40d68a36d95d.png)
-
+    - 각각 예약, 티켓, 결제 관련해서 연결된 커맨드와 이벤트에 의해 트랜잭션이 유지되어야 하는 단위로 어그리게잇하고 바운더리 컨텍스트를 나눈다. 
     - 도메인 서열 분리 
-        - Core Domain:  app(front), store : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app 의 경우 1주일 1회 미만, store 의 경우 1개월 1회 미만
-        - Supporting Domain:   marketing, customer : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
-        - General Domain:   pay : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음 (핑크색으로 이후 전환할 예정)
-
-### 폴리시 부착 (괄호는 수행주체, 폴리시 부착을 둘째단계에서 해놔도 상관 없음. 전체 연계가 초기에 드러남)
-
-![image](https://user-images.githubusercontent.com/487999/79683633-5aced180-8266-11ea-8f42-c769eb88dfb1.png)
+        - Core Domain:  예약시스템: 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app 의 경우 1주일 1회 미만, store 의 경우 1개월 1회 미만
+        - Supporting Domain:   티켓시스템 : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
+        - General Domain:   결제시스템 : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
 
 ### 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
 
