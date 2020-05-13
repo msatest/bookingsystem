@@ -115,7 +115,7 @@
         - 티켓재고확인 이벤트와 티켓예약가능함/티켓예약불가능함은 중복된 과정으로 포괄적인 티켓재고확인 이벤트를 제외함
 
 ### 액터, 커맨드, 폴리시 부착
-![image](ttps://user-images.githubusercontent.com/12521968/81826995-4d5dec00-9573-11ea-87b3-3108a6bf9a76.png)
+![image](https://user-images.githubusercontent.com/12521968/81826995-4d5dec00-9573-11ea-87b3-3108a6bf9a76.png)
 
 ### 어그리게잇, 바운디드 컨텍스트로 묶기
 ![image](https://user-images.githubusercontent.com/12521968/81827940-39ff5080-9574-11ea-874b-cd64402efa5b.png)
@@ -126,17 +126,17 @@
         - Supporting Domain:   티켓시스템 : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
         - General Domain:   결제시스템 : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
 
-### 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
+### 폴리시의 이동과 컨텍스트 매핑 (붉은 선은 Pub/Sub)
 
-![image](https://user-images.githubusercontent.com/487999/79683641-5f938580-8266-11ea-9fdb-4e80ff6642fe.png)
+![image](https://user-images.githubusercontent.com/12521968/81829780-3e2c6d80-9576-11ea-9e38-e356ff0caaaf.jpeg)
 
-### 완성된 1차 모형
+### 완성된 모형
 
 ![image](https://user-images.githubusercontent.com/487999/79683646-63bfa300-8266-11ea-9bc5-c0b650507ac8.png)
 
     - View Model 추가
 
-### 1차 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
+### 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
 
 ![image](https://user-images.githubusercontent.com/487999/79684167-3ecd2f00-826a-11ea-806a-957362d197e3.png)
 
@@ -150,13 +150,6 @@
     - 주문이 취소되면 배달이 취소된다 (ok)
     - 고객이 주문상태를 중간중간 조회한다 (View-green sticker 의 추가로 ok) 
     - 주문상태가 바뀔 때 마다 카톡으로 알림을 보낸다 (?)
-
-
-### 모델 수정
-
-![image](https://user-images.githubusercontent.com/12521968/81820429-93af4d00-956b-11ea-8936-a66201bb883b.png)
-    - 수정된 모델은 모든 요구사항을 커버함.
-    
 
 ### 비기능 요구사항에 대한 검증
 
