@@ -39,7 +39,7 @@
     1. 모든 트랜잭션은 비동기식으로 구성한다. 
 1. 장애격리
     1. 티켓시스템 기능이 수행되지 않더라도 예약은 365일 24시간 받을 수 있어야 한다. Async (event-driven), Eventual Consistency
-    1. 결제시스템 기능이 수행되지 않더라도 결제요청은 365일 24시간 받을 수 있어야 한다. Async (event-driven), Eventual Consistency
+    1. 결제시스템이 과중되면 admin이 결제 요청을 잠시후에 하도록 유도한다. 고객에게는 Pending상태로 보여준다. Circuit breaker, fallback
 1. 성능
     1. user가 예약에 대한 티켓상태를 예약시스템(프론트엔드)에서 티켓리스트로 확인할 수 있어야 한다. CQRS
 
@@ -124,15 +124,16 @@
         - Supporting Domain:   티켓시스템 : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
         - General Domain:   결제시스템 : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
 
-### 폴리시의 이동과 컨텍스트 매핑 (붉은 선은 Pub/Sub)
+### 폴리시의 이동과 컨텍스트 매핑 (붉은 선은 Pub/Sub, 푸른선은 Req/Resp)
 
-![image](https://user-images.githubusercontent.com/12521968/81829780-3e2c6d80-9576-11ea-9e38-e356ff0caaaf.jpeg)
+![image](https://user-images.githubusercontent.com/12521968/81834698-42f42000-957c-11ea-9cb0-690e0b2057be.jpeg)
 
 ### 완성된 모형
 
 ![image](https://user-images.githubusercontent.com/12521968/81820429-93af4d00-956b-11ea-8936-a66201bb883b.png)
 
     - View Model 추가
+    - 실시간성보다는 서비스 안전성을 위해 동기식 호출(req/resp)을 비동기식 호출(pub/sub)로 수정
 
 ### 완성본에 대한 기능적 요구사항을 커버하는지 검증
 
