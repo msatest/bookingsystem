@@ -259,10 +259,7 @@ public interface ReservationRepository extends PagingAndSortingRepository<Reserv
 
 ## 적용 후 REST API 의 테스트
 
-1. 티켓시스템에서 admin이 예약가능한 티켓을 등록한다.
-1. 예약시스템에서 user가 티켓을 예약한다.
-1. 예약이 발생하면 티켓시스템에서 전달받아 admin이 티켓의 예약가능 여부를 확인한다.
-1. 티켓 예약이 가능하면 결제시스템에 결제를 요청한다.
+기능적 요구사항 시나리오 1. 티켓시스템에서 admin이 예약가능한 티켓을 등록한다.
 
 - ticket 서비스에서 티켓 등록요청
 ```
@@ -288,6 +285,111 @@ kafka-console-consumer --bootstrap-server http://localhost:9092 --topic ticketre
 
 
 ## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
+모든 시스템은 장애 상태나 유지보수 상태일 때, 잠시 시스템이 내려가도 작동에 문제가 없게 하기 위해 동기식이 아닌 비동기식으로 처리한다. 그 중 ticket 시스템에서 admin의 티켓 등록이 이루어진 후에 reservation 시스템에 이를 알려주는 행위를 예를 들었다.
+
+- ticket 시스템에 티켓이 등록되었다는 기록을 남긴 후에 티켓등록 이벤트를 카프카로 송출한다.(Publish)
+```
+    @PostPersist
+    public void onPostPersist(){
+        Ticketregistered ticketregistered = new Ticketregistered();
+        BeanUtils.copyProperties(this, ticketregistered);
+        ticketregistered.publishAfterCommit();
+    }
+```
+
+- reservation 시스템에서는 티켓등록 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록(ticketlist에 저장) PolicyHandler 를 구현한다:
+(CQRS)
+```
+package ticketreservation;
+
+import ticketreservation.config.kafka.KafkaProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class TicketlistViewHandler {
+
+
+    @Autowired
+    private TicketlistRepository ticketlistRepository;
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenTicketregistered_then_CREATE_1 (@Payload Ticketregistered ticketregistered) {
+        try {
+            if (ticketregistered.isMe()) {
+                // view 객체 생성
+                Ticketlist ticketlist = new Ticketlist();
+                // view 객체에 이벤트의 Value 를 set 함
+                ticketlist.setTicketid(ticketregistered.getTicketid());
+                // view 레파지 토리에 save
+                ticketlistRepository.save(ticketlist);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenPaycompleted_then_UPDATE_1(@Payload Paycompleted paycompleted) {
+        try {
+            if (paycompleted.isMe()) {
+                // view 객체 조회
+                List<Ticketlist> ticketlistList = ticketlistRepository.findByTicketid(paycompleted.getTicketid());
+                for(Ticketlist ticketlist : ticketlistList){
+                    // view 객체에 이벤트의 eventDirectValue 를 set 함
+                    ticketlist.setStatus(paycompleted.getStatus());
+                    // view 레파지 토리에 save
+                    ticketlistRepository.save(ticketlist);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+
+ticket 시스템은 reservation, payment 시스템과 완전히 분리되어 있으며, 이벤트 수신에 따라 처리되기 때문에 시스템이 유지보수로 인해 잠시 내려간 예약을 받아 ticketlist 저장하는데에 아무 문제 없다.
+
+
+- reservation 시스템을 잠시 내려 놓음
+
+![dv-11](https://user-images.githubusercontent.com/12521968/81849834-0fbc8b80-9592-11ea-8497-571c966e9af9.png)
+
+
+- 티켓등록 처리
+```
+http POST localhost:8081/tickets ticketid=”1” status=”registered”   #Success
+http POST localhost:8081/tickets ticketid=”2” status=”registered”   #Success
+```
+
+- 예약상태 확인
+```
+http localhost:8081/tickets     
+``` 
+
+![dv-12](https://user-images.githubusercontent.com/12521968/81850408-e4866c00-9592-11ea-8195-f5a0ae359378.png)
+
+
+- 예약 완료 상태까지 Event 진행 확인
+
+![dv-13](https://user-images.githubusercontent.com/12521968/81850486-ff58e080-9592-11ea-9d84-801aa08cc862.png)
+
+
+- ticket 시스템 재기동 후 ticket 시스템에 Update 되었는지 확인(CQRS)
+  고객이 숙소에 예약 신청한 내역을 ticketlist view에서 확인할 수 있다.
+
+![dv-14](https://user-images.githubusercontent.com/12521968/81850843-7f7f4600-9593-11ea-9345-f8669f8dc5f2.png)
+
+![dv-15](https://user-images.githubusercontent.com/63624005/81765184-1b666e80-950e-11ea-8722-60464240fe71.png)
 
 
 
