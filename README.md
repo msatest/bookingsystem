@@ -423,6 +423,10 @@ root@httpie:/# http reservation:8080/ticketlists/1
 ```
 ![http2](https://user-images.githubusercontent.com/12521968/81891224-dbbd8680-95e2-11ea-9ecb-21d9ab616756.PNG)
 
+### Liveness, Readiness Probe
+
+![probe](https://user-images.githubusercontent.com/12521968/81892060-20e2b800-95e5-11ea-8c16-825107e5c13f.PNG)
+
 
 ### 오토스케일 아웃
 
