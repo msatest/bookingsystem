@@ -397,11 +397,53 @@ http localhost:8081/tickets
 
 ## CI/CD 설정
 
-## 동기식 호출 / 서킷 브레이킹 / 장애격리
+각 구현체들은 각자의 source repository 에 구성되었고, pipeline build script 는 각 프로젝트 폴더 이하에 azure-pipelines.yml 에 포함되었다.
+
+*devops를 활용하여 pipeline을 구성하였고, CI CD 자동화를 구현하였다.
+
+![cicd1](https://user-images.githubusercontent.com/12521968/81890030-efb3b900-95df-11ea-9898-22f631e01210.PNG)
+
+- 아래와 같이 pod 가 정상적으로 올라간 것을 확인하였다.
+
+![cicd2](https://user-images.githubusercontent.com/12521968/81890215-651f8980-95e0-11ea-8fff-be89c9339fee.PNG)
+
+- 아래와 같이 쿠버네티스에 모두 서비스로 등록된 것을 확인할 수 있다.
+
+![cicd3](https://user-images.githubusercontent.com/12521968/81890324-b4fe5080-95e0-11ea-8023-7bee37ac6014.PNG)
+
+### 이벤트 정상작동 확인
+
+```
+root@httpie:/# http POST ticket:8080/tickets ticketid="1"
+```
+![http1](https://user-images.githubusercontent.com/12521968/81891156-b9c40400-95e2-11ea-93fc-15d077991a0b.PNG)
+
+```
+root@httpie:/# http reservation:8080/ticketlists/1
+```
+![http2](https://user-images.githubusercontent.com/12521968/81891224-dbbd8680-95e2-11ea-9ecb-21d9ab616756.PNG)
 
 
 ### 오토스케일 아웃
 
+시스템을 안정되게 운영할 수 있도록 보완책으로 자동화된 확장 기능을 적용하고자 한다.
+
+- 안정성이 중요한 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 5개까지 늘려준다:
+
+```
+kubectl autoscale deploy payment --min=1 --max=10 --cpu-percent=15
+kubectl get all
+```
+![auto](https://user-images.githubusercontent.com/12521968/81891270-f98aeb80-95e2-11ea-8201-60e927bfc38f.PNG)
+
+
+
+- 워크로드를 동시사용자 10명으로 20초 동안 걸어준다.
+
+```
+kubectl exec -it httpie bin/bash
+siege -c2 -t20S  -v --content-type "application/json" 'http://payment:8080/payments POST {"ticketid":2,"status":"Y"}'
+```
 
 ## 무정지 재배포
 
